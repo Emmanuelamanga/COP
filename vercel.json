@@ -1,8 +1,8 @@
 {
     "version": 2,
     "functions": {
-        "api/index.php": { 
-            "runtime": "vercel-php@0.6.0" 
+        "api/index.php": {
+            "runtime": "vercel-php@0.6.0"
         }
     },
     "routes": [
@@ -17,6 +17,7 @@
             "dest": "/api/index.php"
         }
     ],
+    "buildCommand": "composer install --no-dev --optimize-autoloader && php artisan ziggy:generate resources/js/ziggy.js && npm run build",
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
