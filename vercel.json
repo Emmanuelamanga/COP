@@ -20,7 +20,7 @@
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
-        "APP_URL": "https://your-project.vercel.app",
+        "APP_URL": "https://cop-lyart.vercel.app",
         "APP_KEY": "base64:H/kMl0s0sI7ApsmymRmpvNvobfSQHeLBPRpp4xBktvY=",
 
         "APP_CONFIG_CACHE": "/tmp/config.php",
