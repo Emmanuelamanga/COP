@@ -1,43 +1,22 @@
 {
     "version": 2,
     "functions": {
-        "api/index.php": {
-            "runtime": "vercel-php@0.6.0"
+        "public/index.php": { 
+            "runtime": "vercel-php@0.7.0"
         }
     },
-   "routes": [
+    "routes": [
         {
             "src": "/build/(.*)",
             "dest": "/public/build/$1"
         },
         {
             "src": "/(css|js|images)/(.*)",
-            "headers": {
-                "cache-control": "max-age=31536000"
-            },
             "dest": "/public/$1/$2"
         },
         {
             "src": "/(.*)",
-            "dest": "/api/index.php"
+            "dest": "/public/index.php"
         }
-    ],
-    "env": {
-        "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_URL": "https://cop-lyart.vercel.app",
-        "APP_KEY": "base64:H/kMl0s0sI7ApsmymRmpvNvobfSQHeLBPRpp4xBktvY=",
-
-        "APP_CONFIG_CACHE": "/tmp/config.php",
-        "APP_EVENTS_CACHE": "/tmp/events.php",
-        "APP_PACKAGES_CACHE": "/tmp/packages.php",
-        "APP_ROUTES_CACHE": "/tmp/routes.php",
-        "APP_SERVICES_CACHE": "/tmp/services.php",
-        "VIEW_COMPILED_PATH": "/tmp",
-
-        "CACHE_DRIVER": "array",
-        "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie",
-        "FILESYSTEM_DISK": "public"
-    }
+    ]
 }
