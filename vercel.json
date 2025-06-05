@@ -1,22 +1,11 @@
 {
     "version": 2,
     "functions": {
-        "api/app.php": {
+        "api/*.php": {
             "runtime": "vercel-php@0.7.0"
         }
     },
     "routes": [
-        {
-            "src": "/build/(.*)",
-            "dest": "/public/build/$1"
-        },
-        {
-            "src": "/(css|js|images)/(.*)",
-            "headers": {
-                "cache-control": "max-age=31536000"
-            },
-            "dest": "/public/$1/$2"
-        },
         {
             "src": "/(.*)",
             "dest": "/api/app.php"
