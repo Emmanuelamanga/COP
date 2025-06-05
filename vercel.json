@@ -3,7 +3,7 @@
     "builds": [
         {
             "src": "package.json",
-            "use": "@vercel/static-build",
+            "use": "@vercel/static-build@1",
             "config": {
                 "distDir": "public"
             }
@@ -30,6 +30,11 @@
             "dest": "/api/app.php"
         }
     ],
+    "functions": {
+        "api/app.php": {
+            "runtime": "vercel-php@0.7.0"
+        }
+    },
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
