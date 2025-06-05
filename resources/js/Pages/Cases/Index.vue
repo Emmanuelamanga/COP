@@ -1,278 +1,442 @@
 <template>
-    <AuthenticatedLayout>
-        <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Cases Management</h2>
-                <Link :href="route('cases.create')" 
-                      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                    Report New Case
-                </Link>
-            </div>
-        </template>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-6">
+          <h1 class="text-2xl font-semibold text-gray-900">Cases Management</h1>
+          <Link 
+            :href="route('cases.create')" 
+            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Create New Case
+          </Link>
+        </div>
+      </div>
+    </div>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 bg-white border-b border-gray-200">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Case Details
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Reporter
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Date
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr v-for="case_ in cases.data" :key="case_.id">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ case_.case_type }}
-                                            </div>
-                                            <div class="text-sm text-gray-500">
-                                                {{ case_.county }} - {{ case_.gender }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ case_.user.name }}</div>
-                                            <div class="text-sm text-gray-500">{{ case_.user.email }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span :class="getStatusClass(case_.status)" 
-                                                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                                {{ case_.status.charAt(0).toUpperCase() + case_.status.slice(1) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ formatDate(case_.incident_date) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <Link :href="route('cases.show', case_.id)" 
-                                                  class="text-indigo-600 hover:text-indigo-900 mr-4">
-                                                View
-                                            </Link>
-                                            <button v-if="canVerify && case_.status === 'pending'" 
-                                                    @click="openVerificationModal(case_)"
-                                                    class="text-green-600 hover:text-green-900 mr-4">
-                                                Verify
-                                            </button>
-                                            <button v-if="canApprove && case_.status === 'verified'" 
-                                                    @click="openApprovalModal(case_)"
-                                                    class="text-blue-600 hover:text-blue-900">
-                                                Approve
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Filters -->
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Search -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input
+              v-model="filters.search"
+              @input="debounceSearch"
+              type="text"
+              placeholder="Search cases..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-                        <!-- Pagination -->
-                        <div class="mt-6">
-                            <nav class="flex items-center justify-between">
-                                <div class="flex-1 flex justify-between sm:hidden">
-                                    <Link v-if="cases.prev_page_url" :href="cases.prev_page_url"
-                                          class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Previous
-                                    </Link>
-                                    <Link v-if="cases.next_page_url" :href="cases.next_page_url"
-                                          class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                        Next
-                                    </Link>
-                                </div>
-                                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p class="text-sm text-gray-700">
-                                            Showing {{ cases.from }} to {{ cases.to }} of {{ cases.total }} results
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            <Link v-for="link in cases.links" :key="link.label" 
-                                                  :href="link.url"
-                                                  :class="getLinkClass(link)"
-                                                  v-html="link.label">
-                                            </Link>
-                                        </nav>
-                                    </div>
-                                </div>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          <!-- Status Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              v-model="filters.status"
+              @change="applyFilters"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="verified">Verified</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <!-- Case Type Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Case Type</label>
+            <select
+              v-model="filters.case_type"
+              @change="applyFilters"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Types</option>
+              <option value="GBV">GBV</option>
+              <option value="SRH">SRH</option>
+              <option value="Economic Empowerment">Economic Empowerment</option>
+            </select>
+          </div>
+
+          <!-- Date Range Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <select
+              v-model="filters.date_range"
+              @change="applyFilters"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="quarter">This Quarter</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Verification Modal -->
-        <div v-if="showVerificationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Verify Case</h3>
-                    <form @submit.prevent="submitVerification">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Decision</label>
-                            <select v-model="verificationForm.status" required
-                                    class="w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="">Select Decision</option>
-                                <option value="verified">Verify</option>
-                                <option value="rejected">Reject</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                            <textarea v-model="verificationForm.notes" rows="3"
-                                      class="w-full rounded-md border-gray-300 shadow-sm"
-                                      placeholder="Add verification notes..."></textarea>
-                        </div>
-                        <div class="flex justify-end space-x-3">
-                            <button type="button" @click="closeVerificationModal"
-                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                                Cancel
-                            </button>
-                            <button type="submit" :disabled="verificationForm.processing"
-                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-                                Submit
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <!-- Clear Filters -->
+        <div class="mt-4 flex justify-end">
+          <button
+            @click="clearFilters"
+            class="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Clear all filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Bulk Actions (Admin Only) -->
+      <div v-if="$page.props.auth.user.is_admin && selectedCases.length > 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-blue-800">
+            {{ selectedCases.length }} case(s) selected
+          </span>
+          <div class="flex gap-2">
+            <button
+              @click="bulkAction('verify')"
+              class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+            >
+              Bulk Verify
+            </button>
+            <button
+              @click="bulkAction('approve')"
+              class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+            >
+              Bulk Approve
+            </button>
+            <button
+              @click="bulkAction('reject')"
+              class="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
+            >
+              Bulk Reject
+            </button>
+            <button
+              @click="bulkAction('delete')"
+              class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+            >
+              Bulk Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cases Table -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th v-if="$page.props.auth.user.is_admin" class="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    @change="toggleAllCases"
+                    :checked="allCasesSelected"
+                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Case ID
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  County
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Gender
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Submitted By
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="caseItem in cases?.data" :key="caseItem.id" class="hover:bg-gray-50">
+                <td v-if="$page.props.auth.user.is_admin" class="px-6 py-4">
+                  <input
+                    type="checkbox"
+                    :value="caseItem.id"
+                    v-model="selectedCases"
+                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  #{{ caseItem.id }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ caseItem.county }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <span class="px-2 py-1 text-xs rounded-full bg-gray-100">
+                    {{ caseItem.case_type }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ caseItem.gender }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="getStatusClass(caseItem.status)" class="px-2 py-1 text-xs font-medium rounded-full">
+                    {{ caseItem.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ caseItem.user?.name || 'N/A' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ formatDate(caseItem.created_at) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex gap-2">
+                    <Link
+                      :href="route('cases.show', caseItem.id)"
+                      class="text-blue-600 hover:text-blue-900"
+                    >
+                      View
+                    </Link>
+                    <Link
+                      v-if="canEdit(caseItem)"
+                      :href="route('cases.edit', caseItem.id)"
+                      class="text-green-600 hover:text-green-900"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      v-if="canDelete(caseItem)"
+                      @click="deleteCase(caseItem.id)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <!-- Approval Modal -->
-        <div v-if="showApprovalModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Approve Case</h3>
-                    <form @submit.prevent="submitApproval">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Decision</label>
-                            <select v-model="approvalForm.status" required
-                                    class="w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="">Select Decision</option>
-                                <option value="approved">Approve</option>
-                                <option value="rejected">Reject</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                            <textarea v-model="approvalForm.notes" rows="3"
-                                      class="w-full rounded-md border-gray-300 shadow-sm"
-                                      placeholder="Add approval notes..."></textarea>
-                        </div>
-                        <div class="flex justify-end space-x-3">
-                            <button type="button" @click="closeApprovalModal"
-                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                                Cancel
-                            </button>
-                            <button type="submit" :disabled="approvalForm.processing"
-                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-                                Submit
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <!-- Empty State -->
+        <div v-if="cases?.data?.length === 0" class="text-center py-12">
+          <p class="text-gray-500">No cases found.</p>
         </div>
-    </AuthenticatedLayout>
+
+        <!-- Pagination -->
+        <div v-if="cases?.links?.length > 3" class="bg-gray-50 px-6 py-3 flex items-center justify-between">
+          <div class="flex-1 flex justify-between sm:hidden">
+            <Link
+              v-if="cases.prev_page_url"
+              :href="cases.prev_page_url"
+              class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Previous
+            </Link>
+            <Link
+              v-if="cases.next_page_url"
+              :href="cases.next_page_url"
+              class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Next
+            </Link>
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Showing <span class="font-medium">{{ cases.from }}</span> to
+                <span class="font-medium">{{ cases.to }}</span> of
+                <span class="font-medium">{{ cases.total }}</span> results
+              </p>
+            </div>
+            <div>
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <template v-for="(link, index) in cases.links" :key="index">
+                  <Link
+                    v-if="link.url"
+                    :href="link.url"
+                    :class="[
+                      link.active
+                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
+                      'relative inline-flex items-center px-4 py-2 border text-sm font-medium'
+                    ]"
+                    v-html="link.label"
+                  />
+                  <span
+                    v-else
+                    :class="[
+                      'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-300'
+                    ]"
+                    v-html="link.label"
+                  />
+                </template>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Button -->
+      <div class="mt-6 flex justify-end">
+        <button
+          @click="exportCases"
+          class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
+        >
+          Export Cases
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+<script>
+import { ref, computed } from 'vue'
+import { Link, router, usePage } from '@inertiajs/vue3'
 
-const props = defineProps({
+export default {
+  components: {
+    Link
+  },
+  props: {
     cases: Object,
     canVerify: Boolean,
     canApprove: Boolean,
-});
+    filters: Object
+  },
+  setup(props) {
+    const page = usePage()
+    const selectedCases = ref([])
+    const filters = ref({
+      search: props.filters?.search || '',
+      status: props.filters?.status || '',
+      case_type: props.filters?.case_type || '',
+      date_range: props.filters?.date_range || ''
+    })
 
-const showVerificationModal = ref(false);
-const showApprovalModal = ref(false);
-const selectedCase = ref(null);
+    let searchTimeout = null
 
-const verificationForm = useForm({
-    status: '',
-    notes: '',
-});
+    const allCasesSelected = computed(() => {
+      return props.cases?.data?.length > 0 && 
+             selectedCases.value.length === props.cases?.data?.length
+    })
 
-const approvalForm = useForm({
-    status: '',
-    notes: '',
-});
+    const debounceSearch = () => {
+      clearTimeout(searchTimeout)
+      searchTimeout = setTimeout(() => {
+        applyFilters()
+      }, 300)
+    }
 
-const getStatusClass = (status) => {
-    const classes = {
+    const applyFilters = () => {
+      router.get(route('cases.index'), filters.value, {
+        preserveState: true,
+        preserveScroll: true
+      })
+    }
+
+    const clearFilters = () => {
+      filters.value = {
+        search: '',
+        status: '',
+        case_type: '',
+        date_range: ''
+      }
+      applyFilters()
+    }
+
+    const toggleAllCases = (event) => {
+      if (event.target.checked) {
+        selectedCases.value = props.cases?.data?.map(c => c.id)
+      } else {
+        selectedCases.value = []
+      }
+    }
+
+    const bulkAction = (action) => {
+      if (!confirm(`Are you sure you want to ${action} ${selectedCases.value.length} case(s)?`)) {
+        return
+      }
+
+      router.post(route('cases.bulk-action'), {
+        action: action,
+        case_ids: selectedCases.value,
+        notes: ''
+      }, {
+        onSuccess: () => {
+          selectedCases.value = []
+        }
+      })
+    }
+
+    const deleteCase = (id) => {
+      if (confirm('Are you sure you want to delete this case?')) {
+        router.delete(route('cases.destroy', id))
+      }
+    }
+
+    const canEdit = (caseItem) => {
+      const user = page.props.auth.user
+      return user.is_admin || (caseItem.user_id === user.id && caseItem.status !== 'approved')
+    }
+
+    const canDelete = (caseItem) => {
+      const user = page.props.auth.user
+      return user.is_admin || caseItem.user_id === user.id
+    }
+
+    const getStatusClass = (status) => {
+      const classes = {
         pending: 'bg-yellow-100 text-yellow-800',
         verified: 'bg-blue-100 text-blue-800',
         approved: 'bg-green-100 text-green-800',
-        rejected: 'bg-red-100 text-red-800',
-    };
-    return classes[status] || 'bg-gray-100 text-gray-800';
-};
-
-const getLinkClass = (link) => {
-    if (link.active) {
-        return 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium';
+        rejected: 'bg-red-100 text-red-800'
+      }
+      return classes[status] || 'bg-gray-100 text-gray-800'
     }
-    if (!link.url) {
-        return 'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 cursor-default';
+
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
     }
-    return 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium';
-};
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString();
-};
+    const exportCases = () => {
+      const params = new URLSearchParams(filters.value)
+      window.location.href = route('cases.export') + '?' + params.toString()
+    }
 
-const openVerificationModal = (case_) => {
-    selectedCase.value = case_;
-    verificationForm.reset();
-    showVerificationModal.value = true;
-};
-
-const closeVerificationModal = () => {
-    showVerificationModal.value = false;
-    selectedCase.value = null;
-};
-
-const submitVerification = () => {
-    verificationForm.patch(route('cases.verify', selectedCase.value.id), {
-        onSuccess: () => {
-            closeVerificationModal();
-        },
-    });
-};
-
-const openApprovalModal = (case_) => {
-    selectedCase.value = case_;
-    approvalForm.reset();
-    showApprovalModal.value = true;
-};
-
-const closeApprovalModal = () => {
-    showApprovalModal.value = false;
-    selectedCase.value = null;
-};
-
-const submitApproval = () => {
-    approvalForm.patch(route('cases.approve', selectedCase.value.id), {
-        onSuccess: () => {
-            closeApprovalModal();
-        },
-    });
-};
+    return {
+      selectedCases,
+      filters,
+      allCasesSelected,
+      debounceSearch,
+      applyFilters,
+      clearFilters,
+      toggleAllCases,
+      bulkAction,
+      deleteCase,
+      canEdit,
+      canDelete,
+      getStatusClass,
+      formatDate,
+      exportCases
+    }
+  }
+}
 </script>

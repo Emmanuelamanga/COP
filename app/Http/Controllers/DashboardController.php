@@ -12,6 +12,11 @@ class DashboardController extends Controller
 {
     public function index()
     {
+
+        if (auth()->user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         $stats = [
             'total_cases' => CaseModel::count(),
             'pending_cases' => CaseModel::pending()->count(),

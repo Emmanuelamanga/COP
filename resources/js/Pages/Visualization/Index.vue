@@ -9,13 +9,23 @@
                         </Link>
                     </div>
                     <div class="flex items-center space-x-4">
+                        <Link :href="route('home')" class="text-gray-700 hover:text-blue-600">
+                            Home
+                        </Link>
                         <Link v-if="$page.props.auth.user" :href="route('dashboard')" 
                               class="text-gray-700 hover:text-blue-600">
                             Dashboard
                         </Link>
-                        <Link v-else :href="route('login')" class="text-gray-700 hover:text-blue-600">
-                            Login
-                        </Link>
+                        
+                        <template v-else>
+                            <Link :href="route('login')" class="text-gray-700 hover:text-blue-600">
+                                Login
+                            </Link>
+                            <Link :href="route('register')" 
+                                  class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                Register
+                            </Link>
+                        </template>
                     </div>
                 </div>
             </div>
